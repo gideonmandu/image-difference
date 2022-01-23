@@ -1,2 +1,2 @@
-# image-diffrence
-An application thta can differentiate between an ID or Passport image
+# image-difference
+An application that can differentiate between an ID or Passport image
