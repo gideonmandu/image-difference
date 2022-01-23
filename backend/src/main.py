@@ -118,7 +118,7 @@ def ocr_3(imageA):
     # print(img_valid[img_valid["text"] == word])
 
     all_predictions = img_words["text"].to_list()
-    print(f'{all_predictions}'.lower())
+    # print(f'{all_predictions}'.lower())
 
     return f'{all_predictions}'.lower()
 
@@ -158,11 +158,11 @@ passports = (
 )
 
 for passport in passports:
-    ocr_1(f"src/files/{passport}")
+    print(ocr_1(f"src/files/{passport}"))
     print('~~~~~~~~~~~~~~~~~~~~')
-    ocr_2(f"src/files/{passport}")
+    print(ocr_2(f"src/files/{passport}"))
     print('~~~~~~~~~~~~~~~~~~~~')
-    ocr_3(f"src/files/{passport}")
+    print(ocr_3(f"src/files/{passport}"))
     print("``````````````````````````")
 
-print(mse("src/files/test1.jpg", "src/files/test1.jpg"))
+# print(mse("src/files/test1.jpg", "src/files/test1.jpg"))
