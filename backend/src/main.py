@@ -4,6 +4,7 @@ from src.api import routes
 
 api = FastAPI()
 
+
 def configure_api(app: FastAPI) -> FastAPI:
     origins = [
         "http://localhost",
@@ -21,5 +22,6 @@ def configure_api(app: FastAPI) -> FastAPI:
 
     app.include_router(routes.router)
     return app
+
 
 app = configure_api(app=api)
