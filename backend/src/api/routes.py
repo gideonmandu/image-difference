@@ -21,4 +21,7 @@ async def create_upload_file(file: Optional[UploadFile] = None):
     with open(f"{file.filename}", "wb") as f:
         f.write(image_bytes)
     image_processor = ImageProcessor(image=f"{file.filename}")
-    return {"filename": file.filename, "Imagetype": image_processor.image_type()}
+    return {
+        "filename": file.filename,
+        "imagetype": image_processor.image_type(),
+    }
