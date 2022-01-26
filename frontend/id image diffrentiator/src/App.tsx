@@ -1,45 +1,85 @@
-import { useState } from 'react'
-import logo from './logo.svg'
-import './App.css'
+import { useState, FC } from "react";
+import axios from "axios";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>Hello Vite + React!</p>
-        <p>
-          <button type="button" onClick={() => setCount((count) => count + 1)}>
-            count is: {count}
-          </button>
-        </p>
-        <p>
-          Edit <code>App.tsx</code> and save to test HMR updates.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-          {' | '}
-          <a
-            className="App-link"
-            href="https://vitejs.dev/guide/features.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vite Docs
-          </a>
-        </p>
-      </header>
-    </div>
-  )
+interface file {
+    imagetype: String;
+    filename: String;
 }
 
-export default App
+const App: FC = () => {
+    const [fileUploaded, setFileUploaded] = useState<File>();
+    const [response, setResponse] = useState<file>();
+
+    //for error handling
+    const [error, setError] = useState("");
+
+    const handleImageChange = function (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) {
+        const fileList = e.target.files;
+
+        if (!fileList) return;
+
+        setFileUploaded(fileList[0]);
+    };
+
+    const uploadFile = function (
+        e: React.MouseEvent<HTMLSpanElement, MouseEvent>
+    ) {
+        if (fileUploaded) {
+            const formData = new FormData();
+            formData.append("file", fileUploaded, fileUploaded.name);
+            console.log(formData);
+            axios
+                .post("http://127.0.0.1:8000/file/upload/", formData)
+                .then((res) => {
+                    let data = res.data;
+                    console.log(data);
+                    setResponse(data);
+                    setError("");
+                })
+                .catch((err) => {
+                    alert(err);
+                    setError(err);
+                });
+        }
+    };
+
+    return (
+        <div className="container-fluid vh-100 d-flex justify-content-center align-items-center py-5 bg-dark text-white">
+            <div className="py-5">
+                <div className="mb-3">
+                    <label
+                        htmlFor="exampleFormControlInput1"
+                        className="form-label"
+                    >
+                        Upload Passport or ID image
+                    </label>
+                    <input
+                        type="file"
+                        className="form-control"
+                        id="photo"
+                        name="photo"
+                        multiple={false}
+                        onChange={handleImageChange}
+                    />
+                </div>
+                <div className="mb-3">
+                    <button onClick={uploadFile} className="btn btn-primary">
+                        Choose Picture
+                    </button>
+                </div>
+                <div>
+                    {response?.imagetype ? (
+                        <p>You have Uploaded a {response.imagetype}.</p>
+                    ) : (
+                        <p></p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default App;
