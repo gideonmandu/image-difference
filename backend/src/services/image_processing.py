@@ -1,4 +1,6 @@
 import cv2
+import easyocr
+# import keras_ocr
 import numpy as np
 import pytesseract
 import tesserocr as tr
@@ -11,7 +13,12 @@ class ImageProcessor:
     def __init__(self, image) -> None:
         self.image = image
 
-    def ocr_1(self):
+    def ocr_1(self) -> str:
+        """generate text from image using tesseract ocr
+
+        :return: text from image
+        :rtype: str
+        """
         img = cv2.imread(self.image)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         ret, th1 = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
@@ -21,10 +28,32 @@ class ImageProcessor:
         text = pytesseract.image_to_string(pilImg)
         return str(text.encode("utf-8")).lower()
 
-    def ocr_2(self):
+    def ocr_2(self) -> str:
+        """generate text from image using easyocr
+
+        :return: text from image
+        :rtype: str
+        """
+        reader = easyocr.Reader(["en"], gpu=False)
+        img = cv2.imread(self.image)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        texts = reader.readtext(gray, detail=0)
+        return str(texts).lower()
+
+    # def ocr_3(self) -> str:
+    #     """generate text from image using keras_ocr
+
+    #     :return: text from image
+    #     :rtype: str
+    #     """
+    #     pipeline = keras_ocr.pipeline.Pipeline()
+    #     image = keras_ocr.tools.read(self.image)
+    #     prediction_groups = pipeline.recognize([image])[0]
+    #     return str([text for text, box in prediction_groups])
+
+    def ocr_4(self) -> str:
         number_ok = cv2.imread(self.image)
         blur = cv2.medianBlur(number_ok, 1)
-        # cv2.imshow("ocr", blur)
 
         pil_img = Image.fromarray(cv2.cvtColor(blur, cv2.COLOR_BGR2RGB))
 
@@ -32,16 +61,12 @@ class ImageProcessor:
 
         try:
             api.SetImage(pil_img)
-            boxes = api.GetComponentImages(tr.RIL.TEXTLINE, True)
             text = api.GetUTF8Text()
-
         finally:
             api.End()
         return str(text).lower()
 
-        # cv2.waitKey(0)
-
-    def ocr_3(self):
+    def ocr_5(self) -> str:
         img = cv2.imread(self.image)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         invGamma = 1.0 / 0.3
@@ -98,9 +123,6 @@ class ImageProcessor:
         config = "--psm 11 --oem 3"
         out_rgb = cv2.cvtColor(out, cv2.COLOR_BGR2RGB)
 
-        # uncomment to see raw prediction
-        # print(pytesseract.image_to_string(out_rgb, lang=lang, config=config))
-
         img_data = pytesseract.image_to_data(
             out_rgb,
             lang=lang,
@@ -111,29 +133,25 @@ class ImageProcessor:
         img_valid = img_conf_text[img_conf_text["text"].notnull()]
         img_words = img_valid[img_valid["text"].str.len() > 1]
 
-        # to see confidence of one word
-        # word = "Gulfaraz"
-        # print(img_valid[img_valid["text"] == word])
-
         all_predictions = img_words["text"].to_list()
 
         return f"{all_predictions}".lower()
-
-        # confidence_level = 90
-
-        # img_conf = img_words[img_words["conf"] > confidence_level]
-        # predictions = img_conf["text"].to_list()
-
-        # uncomment to see confident predictions
-        # print(predictions)
 
     def mse(self, imageA, imageB):
         # the 'Mean Squared Error' between the two images is the
         # sum of the squared difference between the two images;
         # NOTE: the two images must have the same dimension
+        def prepare_img(im):
+            size = 300, 200
+            im = cv2.resize(im, size)
+            return im
+
         imageA = cv2.imread(imageA)
         imageB = cv2.imread(imageB)
-        err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
+        err = np.sum(
+            (prepare_img(imageA).astype("float") - prepare_img(imageB).astype("float"))
+            ** 2
+        )
         err /= float(imageA.shape[0] * imageA.shape[1])
 
         # return the MSE, the lower the error, the more "similar"
@@ -142,10 +160,37 @@ class ImageProcessor:
 
     def image_type(self):
         image_passport = 0
-        if "passport" in self.ocr_1():
+        image_id = 0
+        test1 = self.ocr_1()
+        test2 = self.ocr_2()
+        # test3 = self.ocr_3()
+        test4 = self.ocr_4()
+        test5 = self.ocr_5()
+        # print(test1, "\n", test2, "\n", test3, "\n", test4, "\n", test5)
+        print(test1, "\n", test2, "\n", test4, "\n", test5)
+        if "passport" in test1:
             image_passport += 1
-        if "passport" in self.ocr_2():
+        if "passport" in test2:
             image_passport += 1
-        if "passport" in self.ocr_3():
+        # if "passport" in test3:
+        #     image_passport += 1
+        if "passport" in test4:
             image_passport += 1
-        return "passport" if image_passport >= 1 else "ID"
+        if "passport" in test5:
+            image_passport += 1
+        if "id" in test1 and "number" in test1:
+            image_id += 1
+        if "id" in test2 and "number" in test2:
+            image_id += 1
+            return 'ID Card'
+        # if "id" in test3:
+        #     image_id += 1
+        if "id" in test4 and "number" in test4:
+            image_id += 1
+        if "id" in test5 and "number" in test4:
+            image_id += 1
+        if image_id > 1:
+            return "ID card"
+        elif image_passport > 1:
+            return "Passport Card"
+        return "NOT a passport or an ID card"
